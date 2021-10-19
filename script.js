@@ -2,90 +2,101 @@ const url = "http://localhost:4730/todos"
 const btnAddTodo = document.getElementById("btn-todo")
 const list = document.getElementById("todo-list")
 
-renderList()
+getData()
 
-function renderList() {
+function renderList(allTodos) {
+    list.innerHTML = ""
+    allTodos.forEach(todo => {
+        const id = todo.id
+        const todoText = todo.description
 
+        const liEl = document.createElement("li")
+        liEl.setAttribute("data-id", id)
+
+        const checkbox = document.createElement("input")
+        checkbox.type = "checkbox"
+        checkbox.id = "checkbox-" + id
+
+        const label = document.createElement("label")
+        label.setAttribute("for", checkbox.id)
+        label.innerText = todoText
+
+        const btnDelete = document.createElement("button")
+        btnDelete.classList.add("btn-delete")
+        btnDelete.innerText = "X"
+        btnDelete.addEventListener("click", deleteItem)
+
+        liEl.append(checkbox, label, btnDelete)
+        list.appendChild(liEl)
+    })
+}
+
+function getData() {
     fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            for(let i = 0; i < data.length; i++) {
-    
-                const todo = data[i]
-                const todoText = todo.description
-                const liEl = document.createElement("li")
-                liEl.setAttribute("data-id", todo.id)
-
-                const checkbox = document.createElement("input")
-                checkbox.type = "checkbox"
-                checkbox.id = todo.id
-                checkbox.addEventListener("change", updateTodo)
-
-                const label = document.createElement("label")
-                label.setAttribute("for", todo.id)
-                label.innerText = todoText
-
-                const button = document.createElement("button")
-                button.classList.add("btn-delete")
-                button.setAttribute("data-btn-id", todo.id)
-                button.innerText = "X"
-                button.addEventListener("click", deleteTodo)
-
-
-                liEl.append(checkbox, label, button)
-                list.appendChild(liEl)
-            }
-        })
+        .then(res => res.json())
+        .then(data => renderList(data))
 }
 
 function addTodo() {
-    const todoField = document.getElementById("input-todo")
-    const todoText = todoField.value
-    const todoItem = {
-        description: todoText,
+    const newTodoField = document.getElementById("input-todo")
+    const newTodoText = newTodoField.value
+    const newTodoItem = {
+        description: newTodoText,
         done: false
     }
 
-    const requestOptions = {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(todoItem)
+    if (!checkDuplicate(newTodoText) && createSlug(newTodoText) !== "") {
+        addData(newTodoItem)
+    } else {
+        alert("Entweder ist das Textfeld leer oder der Eintrag ist bereits vorhanden.")
     }
 
-    fetch(url, requestOptions)
-        .then(response => response.json())
-        .then(data => console.log("Success:", data))
-        .then(() => {
-            list.innerHTML = ""
-            todoField.value = ""
-            renderList()
-        })
-
-}
-
-function deleteTodo(e) {
-    const target = e.target
-    const id = target.getAttribute("data-btn-id")
-    console.log(id)
-
-    fetch(url + `/${id}`, {method: "DELETE"})
-        .then(res => res.json())
-        .then(() => {
-            list.innerHTML = ""
-            renderList()
-        })
-}
-
-function updateTodo(e) {
-    const target = e.target
-    const id = target.id
-    const doneStatus = {
-        done: target.checked
-    }
-
-    fetch(url + `/${id}`, {method: "PATCH", body: JSON.stringify(doneStatus)})
-        .then(response => response.json())
-    
+    newTodoField.value = ""
 }
 
 btnAddTodo.addEventListener("click", addTodo)
+
+function addData(data) {
+    const requestOptions = {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(data)
+    }
+
+    fetch(url, requestOptions)
+        .then(res => res.json())
+        .then(() => {
+            getData()
+        })
+}
+
+function deleteItem(e) {
+    const id = e.target.parentElement.getAttribute("data-id")
+
+    deleteData(id)
+}
+
+function deleteData(item) {
+    fetch(url + `/${item}`, {method: "DELETE"})
+        .then(res => res.json())
+        .then(() => {
+            getData()
+        })
+}
+
+function checkDuplicate(stringToCheck) {
+    const allItems = document.querySelectorAll("label")
+
+    for (let i = 0; i < allItems.length; i++) {
+        const itemText = createSlug(allItems[i].innerText)
+        const stringText = createSlug(stringToCheck)
+
+        if (itemText === stringText) {
+            return true
+        }
+    }
+}
+
+function createSlug(string) {
+    return string.trim().replaceAll(" ", "").toLowerCase()
+}
