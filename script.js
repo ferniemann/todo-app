@@ -12,10 +12,12 @@ function renderList(allTodos) {
 
         const liEl = document.createElement("li")
         liEl.setAttribute("data-id", id)
+        liEl.addEventListener("click", checkTodo)
 
         const checkbox = document.createElement("input")
         checkbox.type = "checkbox"
         checkbox.id = "checkbox-" + id
+        checkbox.checked = todo.done
 
         const label = document.createElement("label")
         label.setAttribute("for", checkbox.id)
@@ -99,4 +101,29 @@ function checkDuplicate(stringToCheck) {
 
 function createSlug(string) {
     return string.trim().replaceAll(" ", "").toLowerCase()
+}
+
+function checkTodo(e) {
+    const target = e.target
+    const targetId = target.getAttribute("data-id")
+    const checkbox = target.querySelector("input[type='checkbox']")
+    checkbox.checked = !checkbox.checked
+
+    updateData(targetId, checkbox.checked)
+}
+
+function updateData(id, state) {
+    const updatedData = {
+        done: state
+    }
+
+    const requestOptions = {
+        method: "PATCH",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(updatedData)
+    }
+
+    fetch(url + `/${id}`, requestOptions)
+        .then(res => res.json())
+        .then(() => getData())
 }
