@@ -67,7 +67,11 @@ class TodoApp {
         const todoText = textField.value
         const newTodo = new TodoItem(todoText)
 
-        this.addData(newTodo)
+        if (!this.checkForDuplicate(todoText) && todoText !== "") {
+            this.addData(newTodo)
+        } else {
+            alert("Dieser Eintrag ist bereits vorhanden oder leer")
+        }
         textField.value = ""
     }
 
@@ -81,6 +85,19 @@ class TodoApp {
         fetch(this.url, requestOptions)
         .then(res => res.json())
         .then(() => this.getData())
+    }
+
+    checkForDuplicate(newTodo) {
+        newTodo = this.createId(newTodo)
+        const allTodos = document.querySelectorAll("input[type='checkbox']")
+
+        for (let i = 0; i < allTodos.length; i++) {
+            const currentTodo = allTodos[i].id
+
+            if (currentTodo === newTodo) {
+                return true
+            }
+        }
     }
 
     changeTodoState(e) {
