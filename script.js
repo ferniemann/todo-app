@@ -63,7 +63,6 @@ class TodoApp {
     }
 
     addTodo() {
-        console.log("Triggered")
         const textField = document.getElementById("input-todo")
         const todoText = textField.value
         const newTodo = new TodoItem(todoText)
