@@ -16,6 +16,14 @@
             <input type="text" name="" id="input-todo">
             <button id="btn-todo" class="btn-add">+</button>
         </form>
+        <form action="" id="filter-mask" class="filter-mask">
+            <input type="radio" name="filter" id="filter-all" checked>
+            <label for="filter-all" class="filter-text">Show All</label>
+            <input type="radio" name="filter" id="filter-done">
+            <label for="filter-done" class="filter-text">Show Done</label>
+            <input type="radio" name="filter" id="filter-open">
+            <label for="filter-open" class="filter-text">Show Open</label>
+        </form>
         <ul id="todo-list"></ul>
     </main>
     <script src="script.js"></script>

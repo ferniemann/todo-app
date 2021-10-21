@@ -46,10 +46,13 @@ class TodoApp {
     eventHandler() {
         const liElements = document.querySelectorAll("ul li")
         const deleteButtons = document.querySelectorAll(".btn-delete")
+        const filter = document.getElementById("filter-mask")
 
         liElements.forEach(li => li.addEventListener("click", (e) => this.changeTodoState(e)))
 
         deleteButtons.forEach(button => button.addEventListener("click", (e) => this.deleteTodo(e), false))
+
+        filter.addEventListener("change", this.filterTodos)
     }
 
     getData() {
@@ -112,6 +115,38 @@ class TodoApp {
         fetch(this.url + `/${id}`, {method: "DELETE"})
         .then(res => res.json())
         .then(() => this.getData())
+    }
+
+    filterTodos(e) {
+        const btnFilter = e.target
+        const btnId = btnFilter.id
+        const todos = document.querySelectorAll("input[type='checkbox']")
+
+        if(btnId === "filter-all") {
+            todos.forEach(todo => {
+                todo.parentElement.hidden = false
+            })
+        }
+
+        if(btnId === "filter-done") {
+            todos.forEach(todo => {
+                if (todo.checked === false) {
+                    todo.parentElement.hidden = true
+                } else {
+                    todo.parentElement.hidden = false
+                }
+            })
+        }
+
+        if(btnId === "filter-open") {
+            todos.forEach(todo => {
+                if (todo.checked === true) {
+                    todo.parentElement.hidden = true
+                } else {
+                    todo.parentElement.hidden = false
+                }
+            })
+        }
     }
 
     createId(string) {
