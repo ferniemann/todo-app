@@ -1,129 +1,122 @@
-const url = "http://localhost:4730/todos"
-const btnAddTodo = document.getElementById("btn-todo")
-const list = document.getElementById("todo-list")
-
-getData()
-
-function renderList(allTodos) {
-    list.innerHTML = ""
-    allTodos.forEach(todo => {
-        const id = todo.id
-        const todoText = todo.description
-
-        const liEl = document.createElement("li")
-        liEl.setAttribute("data-id", id)
-        liEl.addEventListener("click", checkTodo)
-
-        const checkbox = document.createElement("input")
-        checkbox.type = "checkbox"
-        checkbox.id = "checkbox-" + id
-        checkbox.checked = todo.done
-
-        const label = document.createElement("label")
-        label.setAttribute("for", checkbox.id)
-        label.innerText = todoText
-
-        const btnDelete = document.createElement("button")
-        btnDelete.classList.add("btn-delete")
-        btnDelete.innerText = "X"
-        btnDelete.addEventListener("click", deleteItem)
-
-        liEl.append(checkbox, label, btnDelete)
-        list.appendChild(liEl)
-    })
+class TodoItem {
+    constructor(todoDescription) {
+        this.description = todoDescription
+        this.done = false
+    }
 }
 
-function getData() {
-    fetch(url)
-        .then(res => res.json())
-        .then(data => renderList(data))
-}
+class TodoApp {
+    url = "http://localhost:4730/todos"
 
-function addTodo() {
-    const newTodoField = document.getElementById("input-todo")
-    const newTodoText = newTodoField.value
-    const newTodoItem = {
-        description: newTodoText,
-        done: false
+    constructor() {
+        this.getData()
+
+        document.getElementById("btn-todo").addEventListener("click", () => this.addTodo())
     }
 
-    if (!checkDuplicate(newTodoText) && createSlug(newTodoText) !== "") {
-        addData(newTodoItem)
-    } else {
-        alert("Entweder ist das Textfeld leer oder der Eintrag ist bereits vorhanden.")
-    }
+    renderData(todos) {
+        const list = document.getElementById("todo-list")
 
-    newTodoField.value = ""
-}
+        list.innerHTML = ""
 
-btnAddTodo.addEventListener("click", addTodo)
+        todos.forEach(todo => {
+            const liEl = document.createElement("li")
+            const todoText = todo.description
 
-function addData(data) {
-    const requestOptions = {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(data)
-    }
+            liEl.setAttribute("data-id", todo.id)
 
-    fetch(url, requestOptions)
-        .then(res => res.json())
-        .then(() => {
-            getData()
+            const checkbox = document.createElement("input")
+            checkbox.type = "checkbox"
+            checkbox.checked = todo.done
+            checkbox.id = this.createId(todoText)
+
+            const label = document.createElement("label")
+            label.setAttribute("for", checkbox.id)
+            label.innerText = todoText
+
+            const button = document.createElement("button")
+            button.classList.add("btn-delete")
+            button.innerText = "X"
+
+            liEl.append(checkbox, label, button)
+            list.appendChild(liEl)
         })
-}
+    }
 
-function deleteItem(e) {
-    const id = e.target.parentElement.getAttribute("data-id")
+    eventHandler() {
+        const liElements = document.querySelectorAll("ul li")
+        const deleteButtons = document.querySelectorAll(".btn-delete")
 
-    deleteData(id)
-}
+        liElements.forEach(li => li.addEventListener("click", (e) => this.changeTodoState(e)))
 
-function deleteData(item) {
-    fetch(url + `/${item}`, {method: "DELETE"})
+        deleteButtons.forEach(button => button.addEventListener("click", (e) => this.deleteTodo(e), false))
+    }
+
+    getData() {
+        fetch(this.url)
         .then(res => res.json())
-        .then(() => {
-            getData()
-        })
-}
+        .then(data => this.renderData(data))
+        .then(() => this.eventHandler())
+    }
 
-function checkDuplicate(stringToCheck) {
-    const allItems = document.querySelectorAll("label")
+    addTodo() {
+        console.log("Triggered")
+        const textField = document.getElementById("input-todo")
+        const todoText = textField.value
+        const newTodo = new TodoItem(todoText)
 
-    for (let i = 0; i < allItems.length; i++) {
-        const itemText = createSlug(allItems[i].innerText)
-        const stringText = createSlug(stringToCheck)
+        this.addData(newTodo)
+        textField.value = ""
+    }
 
-        if (itemText === stringText) {
-            return true
+    addData(data) {
+        const requestOptions = {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(data)
         }
-    }
-}
 
-function createSlug(string) {
-    return string.trim().replaceAll(" ", "").toLowerCase()
-}
-
-function checkTodo(e) {
-    const target = e.target
-    const targetId = target.getAttribute("data-id")
-    const checkbox = target.querySelector("input[type='checkbox']")
-    checkbox.checked = !checkbox.checked
-
-    updateData(targetId, checkbox.checked)
-}
-
-function updateData(id, state) {
-    const updatedData = {
-        done: state
-    }
-
-    const requestOptions = {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(updatedData)
-    }
-
-    fetch(url + `/${id}`, requestOptions)
+        fetch(this.url, requestOptions)
         .then(res => res.json())
-        .then(() => getData())
+        .then(() => this.getData())
+    }
+
+    changeTodoState(e) {
+        const target = e.target
+        const todoId = target.getAttribute("data-id")
+        const checkbox = target.querySelector("input[type='checkbox']")
+        checkbox.checked = !checkbox.checked
+
+        this.updateData(todoId, checkbox.checked)
+    }
+
+    updateData(id, state) {
+        const requestOptions = {
+            method: "PATCH",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({done: state})
+        }
+
+        fetch(this.url + `/${id}`, requestOptions)
+        .then(res => res.json())
+        .then(() => this.getData())
+    }
+
+    deleteTodo(e) {
+        e.stopPropagation()
+        const todoId = e.target.parentElement.getAttribute("data-id")
+        this.deleteData(todoId)
+    }
+
+    deleteData(id) {
+        fetch(this.url + `/${id}`, {method: "DELETE"})
+        .then(res => res.json())
+        .then(() => this.getData())
+    }
+
+    createId(string) {
+        return string.trim().replaceAll(" ", "").toLowerCase()
+    }
 }
+
+new TodoApp()

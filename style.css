@@ -29,6 +29,7 @@ header {
 
 .input-mask {
     display: flex;
+    justify-content: center;
 }
 
 input[type="text"], button {
@@ -83,6 +84,26 @@ input[type="text"]:focus + .btn-add:hover {
     border-color: var(--color-main);
 }
 
+.filter-mask {
+    text-align: center;
+    margin-top: 1rem;
+    background-color: var(--color-bit-darker);
+    padding: .75rem;
+    border-radius: .25rem;
+}
+
+.filter-text {
+    color: white;
+    margin: .25rem;
+    padding: .25rem .5rem;
+    background-color: var(--color-main);
+    border-radius: .25rem;
+}
+
+input[type="radio"]:checked + .filter-text {
+    background-color: var(--color-accent);
+}
+
 ul {
     list-style: none;
     padding: 0;
@@ -101,11 +122,11 @@ li {
     border-radius: .25rem;
 }
 
-input[type="checkbox"] {
+input[type="checkbox"], input[type="radio"] {
     display: none;
 }
 
-label {
+ul label {
     transition: .5s;
     pointer-events: none;
     user-select: none;
